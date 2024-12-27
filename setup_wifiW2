@@ -4,6 +4,7 @@
 # Author: Darko Lukic <lukicdarkoo@gmail.com>
 # Special thanks to: https://albeec13.github.io/2017/09/26/raspberry-pi-zero-w-simultaneous-ap-and-managed-mode-wifi/
 sudo apt-get install ifupdown -y
+sudo apt-get install iptables -y
 # Error management
 set -o errexit
 set -o pipefail
