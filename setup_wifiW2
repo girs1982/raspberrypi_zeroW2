@@ -85,13 +85,13 @@ sudo apt -y install dnsmasq dhcpcd hostapd cron
 # Populate `/etc/udev/rules.d/70-persistent-net.rules`
 sudo bash -c 'cat > /etc/udev/rules.d/70-persistent-net.rules' << EOF
 SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="${MAC_ADDRESS}", KERNEL=="phy0", \
-  RUN+="/sbin/iw phy phy0 interface add ap0 type __ap", \
-  RUN+="/bin/ip link set ap0 address ${MAC_ADDRESS}
+  RUN+="/sbin/iw phy phy0 interface add uap0 type __ap", \
+  RUN+="/bin/ip link set uap0 address ${MAC_ADDRESS}
 EOF
 
 # Populate `/etc/dnsmasq.conf`
 sudo bash -c 'cat > /etc/dnsmasq.conf' << EOF
-interface=lo,ap0
+interface=lo,uap0
 no-dhcp-interface=lo,wlan0
 bind-interfaces
 server=8.8.8.8
@@ -104,7 +104,7 @@ EOF
 sudo bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
 ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
-interface=ap0
+interface=uap0
 driver=nl80211
 ssid=${AP_SSID}
 hw_mode=g
@@ -144,12 +144,12 @@ sudo bash -c 'cat > /etc/network/interfaces'  iface AP2 inet dhcp << EOF
 source-directory /etc/network/interfaces.d
 
 auto lo
-auto ap0
+auto uap0
 auto wlan0
 iface lo inet loopback
 
-allow-hotplug ap0
-iface ap0 inet static
+allow-hotplug uap0
+iface uap0 inet static
     address ${AP_IP}
     netmask 255.255.255.0
     hostapd /etc/hostapd/hostapd.conf
@@ -163,11 +163,12 @@ EOF
 # Populate `/bin/start_wifi.sh`
 sudo bash -c 'cat > /bin/rpi-wifi.sh' << EOF
 echo 'Starting Wifi AP and client...'
+iw dev wlan0 interface add uap0 type __ap
 sleep 30
 sudo rm /var/run/wpa_supplicant/wlan0
 sudo ifdown --force wlan0
-sudo ifdown --force ap0
-sudo ifup ap0
+sudo ifdown --force uap0
+sudo ifup uap0
 sudo ifup wlan0
 $([ "${NO_INTERNET-}" != "true" ] && echo "sudo sysctl -w net.ipv4.ip_forward=1")
 $([ "${NO_INTERNET-}" != "true" ] && echo "sudo iptables -t nat -A POSTROUTING -s ${AP_IP_BEGIN}.0/24 ! -d ${AP_IP_BEGIN}.0/24 -j MASQUERADE")
